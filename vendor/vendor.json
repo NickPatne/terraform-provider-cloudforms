@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "3iTJTGAGYpO7twIaqr4MqjKDcek=",
+			"path": "github.com/tidwall/gjson",
+			"revision": "c34bf81952c067718854115564f8e55978be5e1d",
+			"revisionTime": "2019-11-02T21:52:36Z"
+		}
+	],
+	"rootPath": "github.com/terraform-providers/terraform-provider-cloudforms"
+}
