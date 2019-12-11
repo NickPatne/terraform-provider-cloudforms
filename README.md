@@ -24,35 +24,42 @@ official release announcement found [here][5].
 
 ## Full Provider Documentation
 
-The provider is useful for Ordering services from catalog.
+The provider is useful for Ordering services from Service catalog.
 
-**NOTE:** While ordering a service, ManageIQ User must accept the order to get status as 'finished' not 'Pending' or else the resource will not be created, hence `time_out` is provided in resource defination.
 ### Example
 ```hcl
 
 # Configure the Cloudform Provider
 provider "cloudforms" {
-	ip = "${var.MIQ_IP}"
-	user_name = "${var.USER_NAME}"
-	password = "${var.PASSWORD}"
+	ip = "${var.CF_SERVER_IP}"
+	user_name = "${var.CF_USER_NAME}"
+	password = "${var.CF_PASSWORD}"
 }
 
-# Data Source cloudforms_services
-data  "cloudforms_services" "myservice"{
+# Data Source cloudforms_service
+data  "cloudforms_service" "myservice"{
     name = "${var.SERVICE_NAME}"
-
 }
+
+# Data Source cloudforms_service_template
+data "cloudforms_service_template" "mytemplate"{
+	name = "${var.SERVICE_TEMPLATE_NAME}"
+}
+
 
 # Resource cloudforms_miq_request
-resource "cloudforms_miq_request" "test" {
- name = "${var.SERVICE_NAME}"
- input_file_name = "data.json"
- time_out= 50
+resource "cloudforms_miq_request" "test" {	
+	name = "${var.TEMPLATE_NAME}"
+	href = "${data.cloudforms_service_template.mytemplate.href}"
+	catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
+	input_file_name = "data.json"
+	time_out= 50
+}	
+
+output "Service_templates_href"{
+	value = "${data.cloudforms_service_template.mytemplate.href}"
 }
 
-output "service_templates_href"{
-	value = "${data.cloudforms_services.myservice.service_templates.*.href}"
-}
 
 ```
 
