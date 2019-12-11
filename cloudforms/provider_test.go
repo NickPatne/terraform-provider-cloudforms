@@ -30,7 +30,7 @@ func TestProvider_impl(t *testing.T) {
 
 func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("CF_SERVER_IP"); v == "" {
-		t.Fatal("Miq IP must be set for acceptance tests")
+		t.Fatal("Server IP must be set for acceptance tests")
 	}
 
 	if v := os.Getenv("CF_USER_NAME"); v == "" {

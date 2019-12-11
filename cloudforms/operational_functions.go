@@ -19,7 +19,7 @@ func GetServiceCatalog(config Config) ([]byte, error) {
 		return nil, err
 	}
 	expand := "resources"
-	response, err := config.GetQueryResponse(request, expand, "")
+	response, err := config.GetQueryResponse(request, expand, "", "")
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response [GetQueryResponse] \n %s ", err)
 		return nil, err
@@ -28,7 +28,7 @@ func GetServiceCatalog(config Config) ([]byte, error) {
 }
 
 // GetQueryResponse : Will return response with Query parameters
-func (c *Config) GetQueryResponse(request *http.Request, expand string, attribute string) ([]byte, error) {
+func (c *Config) GetQueryResponse(request *http.Request, expand string, attribute string, filter string) ([]byte, error) {
 
 	token, err := GetToken(c.IP, c.UserName, c.Password)
 	if err != nil {
@@ -63,7 +63,14 @@ func (c *Config) GetQueryResponse(request *http.Request, expand string, attribut
 		q.Add("attributes", attribute)
 		request.URL.RawQuery = q.Encode()
 	}
-	log.Println(request.URL)
+
+	if filter != "" {
+		q := request.URL.Query()
+		q.Add("filter[]", filter)
+		request.URL.RawQuery = q.Encode()
+	}
+
+	log.Println("[DEBUG] URL is :", request.URL)
 
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", "appliaction/json")
@@ -92,7 +99,7 @@ func GetTemplateList(config Config, serviceID string) ([]byte, error) {
 		return nil, err
 	}
 
-	response, err := config.GetQueryResponse(request, "", "service_templates")
+	response, err := config.GetQueryResponse(request, "", "service_templates", "")
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s ", err)
 		return nil, err
@@ -133,6 +140,26 @@ func httpResponseStatus(response *http.Response) string {
 		status = "[ Invalid user login credentials, Please check username OR password ! ]"
 	}
 	return status
+}
+
+// GetServiceTemplate : Function to return template Details
+func GetServiceTemplate(config Config, templateName string) ([]byte, error) {
+	url := "api/service_templates" //GetTemplateAPI(templateName)
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		log.Printf("[ERROR] Error in creating request %s ", err)
+		return nil, err
+	}
+	expand := "resources"
+	filter := "name=" + templateName
+	response, err := config.GetQueryResponse(request, expand, "", filter)
+	if err != nil {
+		log.Printf("Response is %s ", string(response))
+		log.Printf("[ERROR] Error in getting response [GetQueryResponse] \n %s ", err)
+		return nil, err
+	}
+	log.Printf("Response is %s ", string(response))
+	return response, nil
 }
 
 // readErrorResponse : Funtion to read error message

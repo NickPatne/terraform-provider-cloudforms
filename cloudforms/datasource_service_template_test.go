@@ -9,22 +9,22 @@ import (
 	"github.com/hashicorp/terraform/terraform"
 )
 
-func TestAccDataSourceServiceDetail_basic(t *testing.T) {
+func TestAccDataSourceTemplate_basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			resource.TestStep{
-				Config: testAccCheckDataServiceDetailConfigServiceName(),
+				Config: testAccCheckDataTemplateConfigTemplateName(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.cloudforms_services.myservice", "id", "1"),
+					resource.TestCheckResourceAttr("data.cloudforms_service_template.mytemplate", "name", os.Getenv("CF_TEMPLATE_NAME")),
 				),
 			},
 		},
 	})
 }
 
-func testAccDataSourceServiceDetail(src, n string) resource.TestCheckFunc {
+func testAccDataSourceTemplate(src, n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 
 		service := s.RootModule().Resources[src]
@@ -37,7 +37,7 @@ func testAccDataSourceServiceDetail(src, n string) resource.TestCheckFunc {
 			"href",
 			"id",
 			"description",
-			"tenant_id",
+			"service_template_catalog_id",
 		}
 
 		for _, attribute := range testArrtributes {
@@ -49,19 +49,19 @@ func testAccDataSourceServiceDetail(src, n string) resource.TestCheckFunc {
 	}
 }
 
-func testAccCheckDataServiceDetailConfigServiceName() string {
+func testAccCheckDataTemplateConfigTemplateName() string {
 	return fmt.Sprintf(`
 	provider "cloudforms" {
-		user_id  = "%s"
+		user_name  = "%s"
 		password = "%s"
 		ip       = "%s"
 	  }
 
-	data  "cloudforms_services" "myservice"{
+	data  "cloudforms_service_template" "mytemplate"{
 		name = "%s"
 	}
 	`, os.Getenv("CF_USER_NAME"),
 		os.Getenv("CF_PASSWORD"),
 		os.Getenv("CF_SERVER_IP"),
-		os.Getenv("CF_SERVICE_NAME"))
+		os.Getenv("CF_TEMPLATE_NAME"))
 }

@@ -1,33 +1,38 @@
-variable "MIQ_IP" {}
-variable "USER_NAME" {}
-variable "PASSWORD" {}
-variable "SERVICE_NAME" {}
 
-# Configure the Cloudform Provider
 provider "cloudforms" {
-	ip = "${var.MIQ_IP}"
-	user_name = "${var.USER_NAME}"
-	password = "${var.PASSWORD}"
+	ip = "${var.CF_SERVER_IP}"
+	user_name = "${var.CF_USER_NAME}"
+	password = "${var.CF_PASSWORD}"
 }
 
-# Data Source cloudforms_services
-data  "cloudforms_services" "myservice"{
+# Data source to display Service Details
+data  "cloudforms_service" "myservice"{
     name = "${var.SERVICE_NAME}"
-
 }
 
-# Resource cloudforms_miq_request
-resource "cloudforms_miq_request" "test" {
- name = "${var.SERVICE_NAME}"
- input_file_name = "data.json"
- time_out= 50
+# Data source to display Service Template Details
+data "cloudforms_service_template" "mytemplate"{
+	name = "${var.TEMPLATE_NAME}"
 }
+
+# Resource to order service from catalog
+resource "cloudforms_miq_request" "test" {	
+	name = "${var.TEMPLATE_NAME}"
+	href = "${data.cloudforms_service_template.mytemplate.href}"
+	catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
+	input_file_name = "data.json"
+	time_out= 50
+}	
 
 
 output "Service_Name"{
-	value = "${data.cloudforms_services.myservice.name}"
+	value = "${data.cloudforms_service.myservice.name}"
 }
 
-output "service_templates_href"{
-	value = "${data.cloudforms_services.myservice.service_templates.*.href}"
+output "Service_catalogID"{
+	value = "${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
+}
+
+output "Service_templates_href"{
+	value = "${data.cloudforms_service_template.mytemplate.href}"
 }

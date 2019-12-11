@@ -168,3 +168,44 @@ type Error struct {
 	Message string `json:"message"`
 	Klass   string `json:"klass"`
 }
+
+// -----------------------------------------
+
+// TemplateQuery : Struct for filtered response of template
+type TemplateQuery struct {
+	Name          string     `json:"name"`
+	Count         int        `json:"count"`
+	Subcount      int        `json:"subcount"`
+	SubqueryCount int        `json:"subquery_count"`
+	Pages         int        `json:"pages"`
+	Resources     []Template `json:"resources"`
+	Actions       []Actions  `json:"actions"`
+	Links         Links      `json:"links"`
+}
+
+// Template :
+type Template struct {
+	Href                     string      `json:"href"`
+	ID                       string      `json:"id"`
+	Name                     string      `json:"name"`
+	Description              string      `json:"description"`
+	GUID                     string      `json:"guid"`
+	Type                     string      `json:"type"`
+	ServiceTemplateID        interface{} `json:"service_template_id"`
+	Options                  Options1    `json:"options"`
+	CreatedAt                time.Time   `json:"created_at"`
+	UpdatedAt                time.Time   `json:"updated_at"`
+	Display                  bool        `json:"display"`
+	EvmOwnerID               interface{} `json:"evm_owner_id"`
+	MiqGroupID               string      `json:"miq_group_id"`
+	ServiceType              string      `json:"service_type"`
+	ProvType                 string      `json:"prov_type"`
+	ProvisionCost            interface{} `json:"provision_cost"`
+	ServiceTemplateCatalogID string      `json:"service_template_catalog_id"`
+	LongDescription          string      `json:"long_description"`
+	TenantID                 string      `json:"tenant_id"`
+	GenericSubtype           interface{} `json:"generic_subtype"`
+	DeletedOn                interface{} `json:"deleted_on"`
+	Internal                 bool        `json:"internal"`
+	Actions                  []Actions   `json:"actions"`
+}

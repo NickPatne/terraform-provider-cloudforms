@@ -1,0 +1,111 @@
+package cloudforms
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+
+	"github.com/hashicorp/terraform/helper/schema"
+)
+
+func dataSourceServiceTemplate() *schema.Resource {
+	return &schema.Resource{
+		Read: dataSourceServiceTemplateRead,
+
+		Schema: map[string]*schema.Schema{
+			"href": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			"id": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			"name": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Computed: true,
+			},
+			"tenant_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+			"service_template_catalog_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+		},
+	}
+}
+
+var serviceTemplateCatalogID string
+
+// Get templateID to fetch Service_templates associated with it
+var tmpID string
+
+// structure to store template detail
+var templateDetailstruct TemplateQuery
+
+func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(Config)
+	// Get index of template
+	var index int
+
+	templateName := d.Get("name").(string)
+	log.Printf("[DEBUG] template name is %s", templateName)
+	log.Println("[DEBUG] Reading Service templates...")
+	response, err := GetServiceTemplate(config, templateName)
+	if err != nil {
+		log.Printf("[ERROR] Error while getting response %s", err)
+		return fmt.Errorf("Error while getting response ->\n %s", err)
+	}
+
+	//store service catalog
+	if json.Unmarshal(response, &templateDetailstruct); err != nil {
+		log.Printf("[Error] Error while unmarshal request json %s ", err)
+		return fmt.Errorf("Error while unmarshal request json -> %s ", err)
+	}
+
+	if templateDetailstruct.Subcount == 0 {
+		log.Printf("[DEBUG] Template called `%s` Not found in catalog ", templateName)
+		return fmt.Errorf("Template called `%s` Not found in catalog", templateName)
+	}
+
+	// Checking whether this service is availabe
+	for i := 0; i < templateDetailstruct.Subcount; i++ {
+		if templateDetailstruct.Resources[i].Name == templateName {
+			index = i
+			tmpID = templateDetailstruct.Resources[i].ID
+			//serviceTemplateCatalogID = templateDetailstruct.Resources[i].ServiceTemplateCatalogID
+			log.Printf("[DEBUG] Template called `%s` found in List ", templateName)
+			break
+		}
+	}
+
+	// Set values into schema
+	d.Set("href", templateDetailstruct.Resources[index].Href)
+	d.Set("id", templateDetailstruct.Resources[index].ID)
+	d.Set("name", templateDetailstruct.Resources[index].Name)
+	d.Set("description", templateDetailstruct.Resources[index].Description)
+	d.Set("tenant_id", templateDetailstruct.Resources[index].TenantID)
+	d.Set("type", templateDetailstruct.Resources[index].Type)
+	d.Set("service_template_catalog_id", templateDetailstruct.Resources[index].ServiceTemplateCatalogID)
+
+	//	Calling SetId on our schema.ResourceData using a value suitable for your resource.
+	//	This ensures whatever resource state we set on schema.ResourceData will be persisted in local state.
+	// 	If we neglect to SetId, no resource state will be persisted.
+	d.SetId(fmt.Sprintf("%s", tmpID))
+
+	return nil
+}

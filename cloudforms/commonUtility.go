@@ -21,7 +21,7 @@ func getServiceCatalog(config Config) ([]byte, error) {
 		return nil, err
 	}
 	expand := "resources"
-	response, err := config.GetQueryResponse(request, expand, "")
+	response, err := config.GetQueryResponse(request, expand, "", "")
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
 		return nil, err

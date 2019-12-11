@@ -18,7 +18,7 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: "The IP of Cloudforms service",
-				DefaultFunc: schema.EnvDefaultFunc("MIQ_IP", nil),
+				DefaultFunc: schema.EnvDefaultFunc("CF_SERVER_IP", nil),
 			},
 
 			"user_name": {
@@ -26,7 +26,7 @@ func Provider() terraform.ResourceProvider {
 				Required:    true,
 				Sensitive:   true,
 				Description: "The UserName of ManageIQ service",
-				DefaultFunc: schema.EnvDefaultFunc("USER_NAME", nil),
+				DefaultFunc: schema.EnvDefaultFunc("CF_USER_NAME", nil),
 			},
 
 			"password": {
@@ -34,13 +34,14 @@ func Provider() terraform.ResourceProvider {
 				Required:    true,
 				Sensitive:   true,
 				Description: "The Password of ManageIQ service",
-				DefaultFunc: schema.EnvDefaultFunc("PASSWORD", nil),
+				DefaultFunc: schema.EnvDefaultFunc("CF_PASSWORD", nil),
 			},
 		},
 
 		//Supported Data Source by this provider
 		DataSourcesMap: map[string]*schema.Resource{
-			"cloudforms_services": dataSourceServiceDetail(),
+			"cloudforms_service":          dataSourceServiceDetail(),
+			"cloudforms_service_template": dataSourceServiceTemplate(),
 		},
 		//Supported Resources by this provider
 		ResourcesMap: map[string]*schema.Resource{
