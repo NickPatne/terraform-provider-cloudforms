@@ -13,17 +13,19 @@ func dataSourceServiceTemplate() *schema.Resource {
 		Read: dataSourceServiceTemplateRead,
 
 		Schema: map[string]*schema.Schema{
+
+			// required values
+			"name": {
+				Type:     schema.TypeString,
+				Required: true,
+			},
+			// computed values
 			"href": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
 			},
 			"id": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-			},
-			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
@@ -57,13 +59,17 @@ var tmpID string
 // structure to store template detail
 var templateDetailstruct TemplateQuery
 
+// dataSourceServiceTemplateRead performs service_template lookup
 func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(Config)
 	// Get index of template
 	var index int
 
 	templateName := d.Get("name").(string)
-	log.Printf("[DEBUG] template name is %s", templateName)
+	if templateName == "" {
+		return fmt.Errorf("name must be set for data source service_template")
+	}
+
 	log.Println("[DEBUG] Reading Service templates...")
 	response, err := GetServiceTemplate(config, templateName)
 	if err != nil {
@@ -71,24 +77,24 @@ func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error while getting response ->\n %s", err)
 	}
 
-	//store service catalog
+	// store service template
 	if json.Unmarshal(response, &templateDetailstruct); err != nil {
 		log.Printf("[Error] Error while unmarshal request json %s ", err)
 		return fmt.Errorf("Error while unmarshal request json -> %s ", err)
 	}
 
+	// subcount is nothing but number of successful results
 	if templateDetailstruct.Subcount == 0 {
 		log.Printf("[DEBUG] Template called `%s` Not found in catalog ", templateName)
 		return fmt.Errorf("Template called `%s` Not found in catalog", templateName)
 	}
 
-	// Checking whether this service is availabe
+	// index of template from result
 	for i := 0; i < templateDetailstruct.Subcount; i++ {
 		if templateDetailstruct.Resources[i].Name == templateName {
 			index = i
 			tmpID = templateDetailstruct.Resources[i].ID
-			//serviceTemplateCatalogID = templateDetailstruct.Resources[i].ServiceTemplateCatalogID
-			log.Printf("[DEBUG] Template called `%s` found in List ", templateName)
+			log.Printf("[DEBUG] Template called `%s` found in catalog ", templateName)
 			break
 		}
 	}

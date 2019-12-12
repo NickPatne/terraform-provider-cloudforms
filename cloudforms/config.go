@@ -63,6 +63,8 @@ func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 		log.Println("[ERROR] Error in getting User group")
 		return nil, err
 	}
+
+	//Initialize HTTPS client to skip SSL certificate verification
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -73,10 +75,11 @@ func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 		return nil, err
 	}
 	request.URL = tempURL
-	log.Println(request.URL)
 
+	// Set headers for request
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", "appliaction/json")
+	// Set Custom headers for request
 	request.Header.Set("X-Auth-Token", token)
 	request.Header.Set("X-MIQ-Group", group)
 
