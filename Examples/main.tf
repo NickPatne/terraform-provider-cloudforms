@@ -5,12 +5,12 @@ provider "cloudforms" {
 	password = "${var.CF_PASSWORD}"
 }
 
-# Data source to display Service Details
+# Data source to display Service details
 data  "cloudforms_service" "myservice"{
     name = "${var.SERVICE_NAME}"
 }
 
-# Data source to display Service Template Details
+# Data source to display Service template details
 data "cloudforms_service_template" "mytemplate"{
 	name = "${var.TEMPLATE_NAME}"
 }
