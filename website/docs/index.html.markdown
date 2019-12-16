@@ -30,26 +30,19 @@ provider "cloudforms" {
 	password = "${var.CF_PASSWORD}"
 }
 
-# Data Source cloudforms_service
-data  "cloudforms_service" "myservice"{
-    name = "${var.SERVICE_NAME}"
-}
-
 # Data Source cloudforms_service_template
 data "cloudforms_service_template" "mytemplate"{
-	name = "${var.SERVICE_TEMPLATE_NAME}"
+	name = "${var.CF_TEMPLATE_NAME}"
 }
 
-
 # Resource cloudforms_miq_request
-resource "cloudforms_miq_request" "test" {	
-	name = "${var.TEMPLATE_NAME}"
-	href = "${data.cloudforms_service_template.mytemplate.href}"
-	catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
-	input_file_name = "data.json"
-	time_out= 50
-}	
-
+resource "cloudforms_service_request" "test" {	
+ 	name = "${var.CF_TEMPLATE_NAME}"
+ 	template_href = "${data.cloudforms_service_template.mytemplate.href}"
+ 	catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
+ 	input_file_name = "${var.INPUT_FILE_NAME}"
+ 	time_out= 50
+}
 output "Service_templates_href"{
 	value = "${data.cloudforms_service_template.mytemplate.href}"
 }
