@@ -47,12 +47,12 @@ data "cloudforms_service_template" "mytemplate"{
 }
 
 
-# Resource cloudforms_miq_request
-resource "cloudforms_miq_request" "test" {	
+# Resource cloudforms_service_request
+resource "cloudforms_service_request" "test" {	
 	name = "${var.TEMPLATE_NAME}"
-	href = "${data.cloudforms_service_template.mytemplate.href}"
+	template_href = "${data.cloudforms_service_template.mytemplate.href}"
 	catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
-	input_file_name = "data.json"
+	input_file_name = "${var.INPUT_FILE_NAME}"
 	time_out= 50
 }	
 
@@ -138,7 +138,7 @@ describes how you can manage a configuration file of the test environment
 variables.
 
 ## Running the Acceptance Tests
-In order to perform acceptance tests of cloudforms, first set in your environment variables required for the connection (`CF_SERVER_IP`,`CF_USER_NAME`,`CF_PASSWORD`,`CF_SERVICE_NAME`,`CF_INPUT_FILE_NAME`).
+In order to perform acceptance tests of cloudforms, first set in your environment variables required for the connection (`CF_SERVER_IP`,`CF_USER_NAME`,`CF_PASSWORD`,`CF_SERVICE_NAME`,`CF_INPUT_FILE_NAME`,`CF_TEMPLATE_NAME`).
 After this is done, you can run the acceptance tests by running:
 
 ```sh

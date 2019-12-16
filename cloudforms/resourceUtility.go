@@ -4,30 +4,15 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/tidwall/gjson"
 )
-
-//function to fetch the list of services:
-func getServiceCatalog(config Config) ([]byte, error) {
-	url := "api/service_catalogs"
-	request, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		log.Printf("[ERROR] Error in creating http Request %s", err)
-		return nil, err
-	}
-	expand := "resources"
-	response, err := config.GetQueryResponse(request, expand, "", "")
-	if err != nil {
-		log.Printf("[ERROR] Error in getting response %s", err)
-		return nil, err
-	}
-	return response, nil
-}
 
 //function to check weather orders are present or not in order list:
 func getOrder(config Config, d *schema.ResourceData) error {
@@ -107,6 +92,7 @@ func checkrequestStatus(d *schema.ResourceData, config Config, requestID string,
 	}
 }
 
+// function to fetch request response
 func getRequestResponse(config Config, requestID string) (string, string, error) {
 
 	url := "api/service_requests/" + requestID //service_request endpoint
@@ -127,4 +113,27 @@ func getRequestResponse(config Config, requestID string) (string, string, error)
 	state1 := gjson.Get(data2, "request_state")
 	state := state1.String()
 	return status, state, nil
+}
+
+// ReadJSON : function to read json data from file and add href into it
+func ReadJSON(inputFileName string, href string) ([]byte, []byte) {
+
+	jsonFile, err := os.Open(inputFileName)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer jsonFile.Close()
+	byteValue, _ := ioutil.ReadFile(inputFileName)
+	var result map[string]map[string]interface{}
+	var result1 map[string]interface{}
+	json.Unmarshal([]byte(byteValue), &result1) // for "action": "order",
+	json.Unmarshal([]byte(byteValue), &result)  //  for "resource" : {}
+
+	result["resource"]["href"] = href
+
+	buff1, _ := json.Marshal(&result1)
+	buff2, _ := json.Marshal(&result)
+
+	return buff1, buff2
+
 }

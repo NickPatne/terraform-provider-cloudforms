@@ -45,7 +45,7 @@ func Provider() terraform.ResourceProvider {
 		},
 		//Supported Resources by this provider
 		ResourcesMap: map[string]*schema.Resource{
-			"cloudforms_miq_request": resourceRequestMiq(),
+			"cloudforms_service_request": resourceServiceRequest(),
 		},
 		ConfigureFunc: providerConfigure,
 	}

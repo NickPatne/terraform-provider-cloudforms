@@ -17,7 +17,7 @@ func TestAccDataSourceServiceDetail_basic(t *testing.T) {
 			resource.TestStep{
 				Config: testAccCheckDataServiceDetailConfigServiceName(),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.cloudforms_services.myservice", "id", "1"),
+					resource.TestCheckResourceAttr("data.cloudforms_service.myservice", "name", os.Getenv("CF_SERVICE_NAME")),
 				),
 			},
 		},

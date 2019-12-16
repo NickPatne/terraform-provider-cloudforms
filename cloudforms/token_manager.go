@@ -11,6 +11,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
+// tokenGostruct : contains response of auth token request
 type tokenJsonstruct struct {
 	AuthToken string `json:"auth_token"`
 	TokenTTL  int    `json:"token_ttl"`

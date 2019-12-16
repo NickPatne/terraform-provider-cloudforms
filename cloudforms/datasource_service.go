@@ -19,6 +19,7 @@ func dataSourceServiceDetail() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+
 			// computed values
 			"href": {
 				Type:     schema.TypeString,
@@ -39,6 +40,7 @@ func dataSourceServiceDetail() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+
 			// Complex computed values [Aggregate Type]
 			"service_templates": {
 				Type:     schema.TypeList,
@@ -77,18 +79,6 @@ func dataSourceServiceDetail() *schema.Resource {
 	}
 }
 
-// Structure to store service catalogs
-var serviceCatalogStruct ServiceCatalogs
-
-// Structure to store service details
-var tempalteListStruct ServiceDetails
-
-// Get index of service
-var index int
-
-// Get ServiceID to fetch Service_templates associated with it
-var serviceID string
-
 // dataSourceServiceDetailRead performs the service lookup
 func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(Config)
@@ -96,6 +86,18 @@ func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error
 	if serviceName == "" {
 		return fmt.Errorf("name must be set for data source service")
 	}
+
+	// Structure to store service catalogs
+	var serviceCatalogStruct ServiceCatalogs
+
+	// Structure to store service details
+	var tempalteListStruct ServiceDetails
+
+	// Get index of service
+	var index int
+
+	// Get ServiceID to fetch Service_templates associated with it
+	var serviceID string
 
 	log.Println("[DEBUG] Reading Service Catalog...")
 	response, err := GetServiceCatalog(config)
@@ -114,7 +116,7 @@ func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Service Catalog is empty")
 	}
 
-	// Checking whether this service is available
+	// Checking wether this service is available
 	for i := 0; i < serviceCatalogStruct.Subcount; i++ {
 		if serviceCatalogStruct.Resources[i].Name == serviceName {
 			index = i

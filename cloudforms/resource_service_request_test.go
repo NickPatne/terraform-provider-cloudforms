@@ -41,8 +41,7 @@ type res struct {
 	Actions           []Actions   `json:"actions"`
 }
 
-func TestAccMiqRequest_Basic(t *testing.T) {
-
+func TestAccServiceRequest_Basic(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			testAccPreCheck(t)
@@ -53,28 +52,24 @@ func TestAccMiqRequest_Basic(t *testing.T) {
 			resource.TestStep{
 				Config: testAccCheckServiceConfig(),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckServiceExists("cloudforms_miq_request.test"),
+					testAccCheckServiceExists("cloudforms_service_request.test"),
 				),
 			},
 		},
 	})
 }
-
 func testAccCheckServiceDestroy(s *terraform.State) error {
 	return nil
 }
-
 func testAccCheckServiceExists(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
-
 		if !ok {
 			return fmt.Errorf("Not found: %s", n)
 		}
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("No request ID is set")
 		}
-
 		config := testAccProvider.Meta().(Config)
 		url := "api/service_requests/" + rs.Primary.ID
 		req, err := http.NewRequest("GET", url, nil)
@@ -92,21 +87,35 @@ func testAccCheckServiceExists(n string) resource.TestCheckFunc {
 		return nil
 	}
 }
-
 func testAccCheckServiceConfig() string {
 	return fmt.Sprintf(`
 	provider "cloudforms" {
-	  user_id  = "%s"
-	  password = "%s"
-	  ip       = "%s"
+	ip       = "%s"  
+	user_name  = "%s"
+	password = "%s"
+	  
 	}
-	resource "cloudforms_miq_request" "test" {
-	  name = "%s"
-	  input_file_name = "%s"
-	}`,
+
+	# Data Source cloudforms_service_template
+	data "cloudforms_service_template" "mytemplate"{
+		name = "%s"
+	}
+	
+
+	# Resource cloudforms_service_request
+	resource "cloudforms_service_request" "test" {  
+		name = "%s"
+		template_href = "${data.cloudforms_service_template.mytemplate.href}"
+		catalog_id ="${data.cloudforms_service_template.mytemplate.service_template_catalog_id}"
+		input_file_name = "%s"
+		time_out= 50
+	} 
+	
+	`,
+		os.Getenv("CF_SERVER_IP"),
 		os.Getenv("CF_USER_NAME"),
 		os.Getenv("CF_PASSWORD"),
-		os.Getenv("CF_SERVER_IP"),
-		os.Getenv("CF_SERVICE_NAME"),
+		os.Getenv("CF_TEMPLATE_NAME"),
+		os.Getenv("CF_TEMPLATE_NAME"),
 		os.Getenv("CF_INPUT_FILE_NAME"))
 }

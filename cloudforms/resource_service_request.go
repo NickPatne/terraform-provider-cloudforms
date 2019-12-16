@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -12,13 +11,14 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-func resourceRequestMiq() *schema.Resource {
+func resourceServiceRequest() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceMiqOrder,
-		Read:   resourceMiqGet,
-		Delete: resourceMiqDelete,
+		Create: resourceServiceRequestCreate,
+		Read:   resourceServiceRequestRead,
+		Delete: resourceServiceRequestDelete,
 
 		Schema: map[string]*schema.Schema{
+			// required values
 			"name": &schema.Schema{
 				Type:     schema.TypeString,
 				Required: true,
@@ -29,6 +29,17 @@ func resourceRequestMiq() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 			},
+			"template_href": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			"catalog_id": &schema.Schema{
+				Type:     schema.TypeString,
+				Required: true,
+				ForceNew: true,
+			},
+			// optional values
 			"time_out": &schema.Schema{
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -37,57 +48,49 @@ func resourceRequestMiq() *schema.Resource {
 		},
 	}
 }
-func resourceMiqOrder(d *schema.ResourceData, m interface{}) error {
+
+// resourceServiceRequestCreate : This function will create resource
+func resourceServiceRequestCreate(d *schema.ResourceData, m interface{}) error {
 	config := m.(Config)
-	serviceName := d.Get("name").(string)
 	inputFileName := d.Get("input_file_name").(string)
 	timeout := d.Get("time_out").(int)
-	response, err := getServiceCatalog(config)
-	if err != nil {
-		log.Printf("[ERROR] Error in getting response %s", err)
-		return fmt.Errorf("[ERROR] Error in getting response %s", err)
-	}
-	var serviceCatalogGostruct ServiceCatalogJsonstruct
+	href := d.Get("template_href").(string)
+	catalogID := d.Get("catalog_id").(string)
 
-	if err = json.Unmarshal(response, &serviceCatalogGostruct); err != nil {
-		log.Printf("[ERROR] Error while unmarshal requests json %s", err)
-		return fmt.Errorf("[ERROR] Error while unmarshal requests json %s", err)
-	}
+	// templateStruct : struct to store attributes of service
+	var templateStruct template
 
-	i := serviceCatalogGostruct.Subcount
-	serviceID := ""
-	for j := 0; j < i; j++ {
-		if serviceCatalogGostruct.Resources[j].Name == serviceName {
-			serviceID = serviceCatalogGostruct.Resources[j].ID
-		}
-	}
-	if serviceID == "" {
-		log.Printf("[Error] Service is not present")
-		return fmt.Errorf("[ERROR] Service is not present %s", serviceName)
-	}
-	var t template
-	url := "api/service_catalogs/" + serviceID + "/service_templates"
+	url := "api/service_catalogs/" + catalogID + "/service_templates"
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
 	}
-	response, err = config.GetResponse(request)
+	response, err := config.GetResponse(request)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
 	}
-	file, e := ioutil.ReadFile(inputFileName)
-	if e != nil {
-		log.Printf("[ERROR] File error: %v\n", e)
-	}
 
-	err = json.Unmarshal(file, &t)
+	// caling helper function to write href into file
+	file, file1 := ReadJSON(inputFileName, href)
+
+	err = json.Unmarshal(file, &templateStruct)
 	if err != nil {
 		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
 		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
 	}
-	buff, _ := json.Marshal(&t)
+
+	err = json.Unmarshal(file1, &templateStruct)
+	if err != nil {
+		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
+		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
+	}
+
+	buff, _ := json.Marshal(&templateStruct)
+	log.Println("[DEBUG] template struct:", templateStruct)
+
 	var jsonStr = []byte(buff)
-	url = "api/service_catalogs/" + serviceID + "/service_templates"
+	log.Println("[DEBUG] json str in string form :", string(jsonStr))
+	url = "api/service_catalogs/" + catalogID + "/service_templates"
 	request, err = http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
@@ -98,13 +101,18 @@ func resourceMiqOrder(d *schema.ResourceData, m interface{}) error {
 		log.Printf("[ERROR] Error in getting response %s", err)
 		return fmt.Errorf("[ERROR] Error in getting response %s", err)
 	}
+
+	// requestGostruct : struct to store response of post request
 	var requestGostruct requestJsonstruct
 	if err = json.Unmarshal(response, &requestGostruct); err != nil {
 		log.Printf("[ERROR] Error while unmarshal requests json %s", err)
 		return fmt.Errorf("[ERROR] Error while unmarshal requests json %s", err)
 	}
+
 	requestID := requestGostruct.Results[0].ID
 	log.Println("[DEBUG] request id:", requestID)
+
+	// check for timeout
 	if timeout == 0 {
 		return checkrequestStatus(d, config, requestID, 50)
 	} else {
@@ -112,16 +120,18 @@ func resourceMiqOrder(d *schema.ResourceData, m interface{}) error {
 	}
 }
 
-func resourceMiqGet(d *schema.ResourceData, m interface{}) error {
+// resourceServiceRequestRead : This function will read resource
+func resourceServiceRequestRead(d *schema.ResourceData, m interface{}) error {
 	config := m.(Config)
 	err := getOrder(config, d)
 	return err
 
 }
 
-func resourceMiqDelete(d *schema.ResourceData, m interface{}) error {
+// resourceServiceRequestDelete : This function will delete resource
+func resourceServiceRequestDelete(d *schema.ResourceData, m interface{}) error {
 
-	resourceMiqGet(d, m)
+	resourceServiceRequestRead(d, m)
 	if d.Id() == "" {
 		log.Println("[ERROR] Cannot find Order")
 		return fmt.Errorf("[ERROR] Cannot find Order")
