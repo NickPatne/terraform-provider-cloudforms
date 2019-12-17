@@ -50,66 +50,61 @@ func resourceServiceRequest() *schema.Resource {
 }
 
 // resourceServiceRequestCreate : This function will create resource
-func resourceServiceRequestCreate(d *schema.ResourceData, m interface{}) error {
-	config := m.(Config)
+func resourceServiceRequestCreate(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(Config)
 	inputFileName := d.Get("input_file_name").(string)
 	timeout := d.Get("time_out").(int)
 	href := d.Get("template_href").(string)
 	catalogID := d.Get("catalog_id").(string)
 
-	// templateStruct : struct to store attributes of service
+	// templateStruct : struct to store action and attributes of service
 	var templateStruct template
 
-	url := "api/service_catalogs/" + catalogID + "/service_templates"
-	request, err := http.NewRequest("GET", url, nil)
+	// calling helper function to write href into file
+	file, file1, err := ReadJSON(inputFileName, href)
 	if err != nil {
-		log.Printf("[ERROR] Error in creating http Request %s", err)
-	}
-	response, err := config.GetResponse(request)
-	if err != nil {
-		log.Printf("[ERROR] Error in getting response %s", err)
+		log.Printf("[ERROR] %s", err)
+		return fmt.Errorf("[ERROR] %s", err)
 	}
 
-	// caling helper function to write href into file
-	file, file1 := ReadJSON(inputFileName, href)
-
+	// will set action to struct
 	err = json.Unmarshal(file, &templateStruct)
 	if err != nil {
 		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
 		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
 	}
 
+	// will set resource attributes to struct
 	err = json.Unmarshal(file1, &templateStruct)
 	if err != nil {
 		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
 		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
 	}
 
+	// buff will contain request body
 	buff, _ := json.Marshal(&templateStruct)
-	log.Println("[DEBUG] template struct:", templateStruct)
 
-	var jsonStr = []byte(buff)
-	log.Println("[DEBUG] json str in string form :", string(jsonStr))
-	url = "api/service_catalogs/" + catalogID + "/service_templates"
-	request, err = http.NewRequest("POST", url, bytes.NewBuffer(jsonStr))
+	url := "api/service_catalogs/" + catalogID + "/service_templates"
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(buff))
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
 		return fmt.Errorf("[ERROR] Error in creating http Request %s", err)
 	}
-	response, err = config.GetResponse(request)
+
+	response, err := config.GetResponse(request)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
 		return fmt.Errorf("[ERROR] Error in getting response %s", err)
 	}
 
-	// requestGostruct : struct to store response of post request
-	var requestGostruct requestJsonstruct
-	if err = json.Unmarshal(response, &requestGostruct); err != nil {
+	// requestStruct : struct to store response body of post request
+	var requestStruct requestJsonstruct
+	if err = json.Unmarshal(response, &requestStruct); err != nil {
 		log.Printf("[ERROR] Error while unmarshal requests json %s", err)
 		return fmt.Errorf("[ERROR] Error while unmarshal requests json %s", err)
 	}
 
-	requestID := requestGostruct.Results[0].ID
+	requestID := requestStruct.Results[0].ID
 	log.Println("[DEBUG] request id:", requestID)
 
 	// check for timeout
@@ -121,34 +116,41 @@ func resourceServiceRequestCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 // resourceServiceRequestRead : This function will read resource
-func resourceServiceRequestRead(d *schema.ResourceData, m interface{}) error {
-	config := m.(Config)
+func resourceServiceRequestRead(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(Config)
 	err := getOrder(config, d)
 	return err
 
 }
 
 // resourceServiceRequestDelete : This function will delete resource
-func resourceServiceRequestDelete(d *schema.ResourceData, m interface{}) error {
+func resourceServiceRequestDelete(d *schema.ResourceData, meta interface{}) error {
 
-	resourceServiceRequestRead(d, m)
+	// check whether resource exists
+	resourceServiceRequestRead(d, meta)
 	if d.Id() == "" {
 		log.Println("[ERROR] Cannot find Order")
 		return fmt.Errorf("[ERROR] Cannot find Order")
 	}
-	config := m.(Config)
+	config := meta.(Config)
 
-	url1 := "api/service_requests/" + d.Id()
-	req, err := http.NewRequest("GET", url1, nil)
+	url := "api/service_requests/" + d.Id()
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
 		return err
 	}
 	response, err := config.GetResponse(req)
+	if err != nil {
+		log.Printf("[ERROR] Error in getting response %s", err)
+		return fmt.Errorf("[ERROR] Error in getting response %s", err)
+	}
 
-	data3 := string(response)
-	oi := gjson.Get(data3, "service_order_id")
-	oID := oi.String()
-	err1 := deleteOrder(config, oID)
-	return err1
+	data := string(response)
+	// get service_order_id
+	orderIDFromResult := gjson.Get(data, "service_order_id")
+	orderID := orderIDFromResult.String()
+
+	err = deleteOrder(config, orderID)
+	return err
 }

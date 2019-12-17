@@ -11,7 +11,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-// tokenGostruct : contains response of auth token request
+// tokenJsonstruct : contains token attributes
 type tokenJsonstruct struct {
 	AuthToken string `json:"auth_token"`
 	TokenTTL  int    `json:"token_ttl"`
@@ -35,33 +35,35 @@ func getTokenFromServer(IP, UserID, Password string) (string, error) {
 		log.Println("[ERROR] Error while requesting Token", err)
 		return "", err
 	}
-	tr := &http.Transport{
+	transportFlag := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
+	// set request header
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(UserID, Password)
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: transportFlag}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("[ERROR] Error while requesting Token", err)
 		return "", err
 	}
+
 	body, err := ioutil.ReadAll(resp.Body)
-	print(string(body))
 	if err != nil {
-		log.Println("[Error]")
+		log.Printf("[Error] Error while getting response: %s", err)
 	}
 
+	// set request header
 	if resp.StatusCode == http.StatusOK {
-		var tokenGostruct tokenJsonstruct
-		if err = json.Unmarshal(body, &tokenGostruct); err != nil {
+		var tokenStruct tokenJsonstruct
+		if err = json.Unmarshal(body, &tokenStruct); err != nil {
 			log.Printf("[ERROR] Error while unmarshal %s", err)
 			return "", fmt.Errorf("[ERROR] Error while unmarshal %s", err)
 		}
-		token := tokenGostruct.AuthToken
+		token := tokenStruct.AuthToken
 		return token, nil
 	}
 	return "", fmt.Errorf(httpResponseStatus(resp))
@@ -85,7 +87,7 @@ func getUserGroup(IP, UserID, Password string) (string, error) {
 		log.Println("[ERROR] Error while requesting Token", err)
 		return "", err
 	}
-	tr := &http.Transport{
+	transportFlag := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
@@ -93,7 +95,7 @@ func getUserGroup(IP, UserID, Password string) (string, error) {
 	req.Header.Set("Content-Type", "application/json")
 	req.SetBasicAuth(UserID, Password)
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: transportFlag}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Println("[ERROR Error while requesting Token]", err)

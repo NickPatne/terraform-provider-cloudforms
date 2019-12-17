@@ -14,7 +14,7 @@ import (
 	"github.com/tidwall/gjson"
 )
 
-//function to check weather orders are present or not in order list:
+// getOrder : Function to check whether orders are present or not in order list
 func getOrder(config Config, d *schema.ResourceData) error {
 	url := "api/service_orders?expand=resources"
 	request, err := http.NewRequest("GET", url, nil)
@@ -28,32 +28,35 @@ func getOrder(config Config, d *schema.ResourceData) error {
 		return err
 	}
 	data := string(response)
-	sc := gjson.Get(data, "subcount")
-	sc1 := sc.Uint() //convert json result type to int
-	if sc1 == 0 {
-		fmt.Println("No orders available")
-		log.Println("[ERROR] Service order was not found")
+	subCountFromResult := gjson.Get(data, "subcount")
+	subCount := subCountFromResult.Uint() //convert json result type to int
+	if subCount == 0 {
+		fmt.Println("Service order not found")
+		log.Println("[ERROR] Service order not found")
 		d.SetId("")
 	}
 	return nil
 }
 
-//Func to delete an order with oID corresponds to given requestID
-func deleteOrder(config Config, oID string) error {
+// deleteOrder : Function to delete an order with orderID corresponds to given requestID
+func deleteOrder(config Config, orderID string) error {
 
-	url2 := "api/service_orders/" + oID
-	reqBody, err := json.Marshal(map[string]string{
+	url := "api/service_orders/" + orderID
+
+	// buff will contain request body
+	buff, err := json.Marshal(map[string]string{
 		"action": "delete",
 	})
 	if err != nil {
 		log.Fatalln(err)
 	}
-	req, err := http.NewRequest("POST", url2, bytes.NewBuffer(reqBody))
+
+	request, err := http.NewRequest("POST", url, bytes.NewBuffer(buff))
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
 	}
 
-	response, err := config.GetResponse(req)
+	response, err := config.GetResponse(request)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
 	}
@@ -63,16 +66,15 @@ func deleteOrder(config Config, oID string) error {
 
 }
 
-//Function to check request status:
-
+// checkrequestStatus : Function to check request status
 func checkrequestStatus(d *schema.ResourceData, config Config, requestID string, timeOut int) error {
 	timeout := time.After(time.Duration(timeOut) * time.Second)
 	for {
 		select {
 		case <-time.After(1 * time.Second):
-			status, state, err := getRequestResponse(config, requestID)
+			status, state, err := checkServiceRequestStatus(config, requestID)
 			if err == nil {
-				if state == "finished" && status == "Ok" {
+				if state == "pending" && status == "Ok" {
 					log.Println("[DEBUG] Service order added SUCCESSFULLY")
 					d.SetId(requestID)
 					return nil
@@ -92,10 +94,10 @@ func checkrequestStatus(d *schema.ResourceData, config Config, requestID string,
 	}
 }
 
-// function to fetch request response
-func getRequestResponse(config Config, requestID string) (string, string, error) {
+// checkServiceRequestStatus : Function to fetch service request status
+func checkServiceRequestStatus(config Config, requestID string) (string, string, error) {
 
-	url := "api/service_requests/" + requestID //service_request endpoint
+	url := "api/service_requests/" + requestID
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
@@ -107,33 +109,38 @@ func getRequestResponse(config Config, requestID string) (string, string, error)
 		return "", "", fmt.Errorf("[ERROR] Error in getting response %s", err)
 	}
 
-	data2 := string(response)
-	status1 := gjson.Get(data2, "status")
-	status := status1.String()
-	state1 := gjson.Get(data2, "request_state")
-	state := state1.String()
-	return status, state, nil
+	data := string(response)
+	// get request status
+	statusFromResult := gjson.Get(data, "status")
+	status := statusFromResult.String()
+
+	// get request_state
+	requestStateFromResult := gjson.Get(data, "request_state")
+	requestState := requestStateFromResult.String()
+
+	return status, requestState, nil
 }
 
-// ReadJSON : function to read json data from file and add href into it
-func ReadJSON(inputFileName string, href string) ([]byte, []byte) {
+// ReadJSON : Function to read json data from file and add href into it
+func ReadJSON(inputFileName string, href string) ([]byte, []byte, error) {
 
 	jsonFile, err := os.Open(inputFileName)
 	if err != nil {
 		fmt.Println(err)
+		return nil, nil, err
 	}
 	defer jsonFile.Close()
-	byteValue, _ := ioutil.ReadFile(inputFileName)
+	fileData, _ := ioutil.ReadFile(inputFileName)
 	var result map[string]map[string]interface{}
 	var result1 map[string]interface{}
-	json.Unmarshal([]byte(byteValue), &result1) // for "action": "order",
-	json.Unmarshal([]byte(byteValue), &result)  //  for "resource" : {}
+	json.Unmarshal([]byte(fileData), &result1) // for "action":
+	json.Unmarshal([]byte(fileData), &result)  //  for "resource" :
 
+	// will add key value into map
 	result["resource"]["href"] = href
 
 	buff1, _ := json.Marshal(&result1)
 	buff2, _ := json.Marshal(&result)
 
-	return buff1, buff2
-
+	return buff1, buff2, nil
 }

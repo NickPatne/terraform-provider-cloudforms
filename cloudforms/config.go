@@ -17,7 +17,7 @@ type Config struct {
 	Password string
 }
 
-// CFConnect : will create client for connection
+// CFConnect : will create client struct for connection
 func CFConnect(d *schema.ResourceData) (interface{}, error) {
 
 	ip := d.Get("ip").(string)
@@ -46,9 +46,7 @@ func CFConnect(d *schema.ResourceData) (interface{}, error) {
 	return config, nil
 }
 
-// GetResponse : Get the desired Response
-// This function will return API response which will contain
-// response.body in []byte format
+// GetResponse : This function will return api response
 func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 
 	token, err := GetToken(c.IP, c.UserName, c.Password)
@@ -56,6 +54,7 @@ func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 		log.Println("[ERROR] Error in getting token")
 		return nil, err
 	}
+
 	// While authenticating with Token
 	// it is necessary to provide user-group
 	group, err := GetGroup(c.IP, c.UserName, c.Password)
@@ -65,7 +64,7 @@ func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 	}
 
 	//Initialize HTTPS client to skip SSL certificate verification
-	tr := &http.Transport{
+	transportFlag := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	var tempURL *url.URL
@@ -83,7 +82,7 @@ func (c *Config) GetResponse(request *http.Request) ([]byte, error) {
 	request.Header.Set("X-Auth-Token", token)
 	request.Header.Set("X-MIQ-Group", group)
 
-	client := &http.Client{Transport: tr}
+	client := &http.Client{Transport: transportFlag}
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Println("[ERROR] Error while getting response", err)

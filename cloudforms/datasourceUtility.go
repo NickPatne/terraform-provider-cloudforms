@@ -15,13 +15,14 @@ func GetServiceCatalog(config Config) ([]byte, error) {
 	url := "api/service_catalogs"
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		log.Printf("[ERROR] Error in creating request %s ", err)
+		log.Printf("[ERROR] Error in creating request: %s ", err)
 		return nil, err
 	}
+
 	expand := "resources"
 	response, err := config.GetQueryResponse(request, expand, "", "")
 	if err != nil {
-		log.Printf("[ERROR] Error in getting response [GetQueryResponse] \n %s ", err)
+		log.Printf("[ERROR] Error in getting response: %s ", err)
 		return nil, err
 	}
 	return response, nil
@@ -36,12 +37,16 @@ func (c *Config) GetQueryResponse(request *http.Request, expand string, attribut
 		return nil, err
 	}
 
+	// While authenticating with Token
+	// it is necessary to provide user-group
 	group, err := GetGroup(c.IP, c.UserName, c.Password)
 	if err != nil {
 		log.Println("[ERROR] Error in getting User group")
 		return nil, err
 	}
-	tr := &http.Transport{
+
+	// Initialize HTTPS client to skip SSL certificate verification
+	transportFlag := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 	var tempURL *url.URL
@@ -50,7 +55,9 @@ func (c *Config) GetQueryResponse(request *http.Request, expand string, attribut
 		log.Println("[ERROR] URL is not in correct format")
 		return nil, err
 	}
+
 	request.URL = tempURL
+
 	//Setting Query Parameters
 	if expand != "" {
 		q := request.URL.Query()
@@ -70,13 +77,15 @@ func (c *Config) GetQueryResponse(request *http.Request, expand string, attribut
 		request.URL.RawQuery = q.Encode()
 	}
 
-	log.Println("[DEBUG] URL is :", request.URL)
-
+	// Set headers for request
 	request.Header.Set("Accept", "application/json")
 	request.Header.Set("Content-Type", "appliaction/json")
+
+	// Set Custom headers for request
 	request.Header.Set("X-Auth-Token", token)
 	request.Header.Set("X-MIQ-Group", group)
-	client := &http.Client{Transport: tr}
+
+	client := &http.Client{Transport: transportFlag}
 	resp, err := client.Do(request)
 	if err != nil {
 		log.Println("[ERROR] Do: ", err)
@@ -99,7 +108,8 @@ func GetTemplateList(config Config, serviceID string) ([]byte, error) {
 		return nil, err
 	}
 
-	response, err := config.GetQueryResponse(request, "", "service_templates", "")
+	attribute := "service_templates"
+	response, err := config.GetQueryResponse(request, "", attribute, "")
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s ", err)
 		return nil, err

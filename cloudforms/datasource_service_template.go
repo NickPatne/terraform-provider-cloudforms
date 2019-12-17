@@ -51,6 +51,7 @@ func dataSourceServiceTemplate() *schema.Resource {
 	}
 }
 
+// get catalogID
 var serviceTemplateCatalogID string
 
 // Get templateID to fetch Service_templates associated with it
@@ -62,31 +63,32 @@ var templateDetailstruct TemplateQuery
 // dataSourceServiceTemplateRead performs service_template lookup
 func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(Config)
+
 	// Get index of template
 	var index int
 
 	templateName := d.Get("name").(string)
 	if templateName == "" {
-		return fmt.Errorf("name must be set for data source service_template")
+		return fmt.Errorf("name of template must be set for data source service_template")
 	}
 
 	log.Println("[DEBUG] Reading Service templates...")
 	response, err := GetServiceTemplate(config, templateName)
 	if err != nil {
-		log.Printf("[ERROR] Error while getting response %s", err)
-		return fmt.Errorf("Error while getting response ->\n %s", err)
+		log.Printf("[ERROR] Error while getting response: %s", err)
+		return fmt.Errorf("Error while getting response: %s", err)
 	}
 
 	// store service template
 	if json.Unmarshal(response, &templateDetailstruct); err != nil {
-		log.Printf("[Error] Error while unmarshal request json %s ", err)
-		return fmt.Errorf("Error while unmarshal request json -> %s ", err)
+		log.Printf("[Error] Error while unmarshalling json: %s", err)
+		return fmt.Errorf("Error while unmarshalling json: %s", err)
 	}
 
 	// subcount is nothing but number of successful results
 	if templateDetailstruct.Subcount == 0 {
-		log.Printf("[DEBUG] Template called `%s` Not found in catalog ", templateName)
-		return fmt.Errorf("Template called `%s` Not found in catalog", templateName)
+		log.Printf("[DEBUG] Template called `%s` Not found in List ", templateName)
+		return fmt.Errorf("Template called `%s` Not found in List", templateName)
 	}
 
 	// index of template from result
@@ -94,7 +96,7 @@ func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) err
 		if templateDetailstruct.Resources[i].Name == templateName {
 			index = i
 			tmpID = templateDetailstruct.Resources[i].ID
-			log.Printf("[DEBUG] Template called `%s` found in catalog ", templateName)
+			log.Printf("[DEBUG] Template called `%s` found in List ", templateName)
 			break
 		}
 	}
@@ -108,7 +110,7 @@ func dataSourceServiceTemplateRead(d *schema.ResourceData, meta interface{}) err
 	d.Set("type", templateDetailstruct.Resources[index].Type)
 	d.Set("service_template_catalog_id", templateDetailstruct.Resources[index].ServiceTemplateCatalogID)
 
-	//	Calling SetId on our schema.ResourceData using a value suitable for your resource.
+	//	Calling SetId on our schema.ResourceData using a value suitable for resource.
 	//	This ensures whatever resource state we set on schema.ResourceData will be persisted in local state.
 	// 	If we neglect to SetId, no resource state will be persisted.
 	d.SetId(fmt.Sprintf("%s", tmpID))

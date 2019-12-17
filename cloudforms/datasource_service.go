@@ -79,7 +79,7 @@ func dataSourceServiceDetail() *schema.Resource {
 	}
 }
 
-// dataSourceServiceDetailRead performs the service lookup
+// dataSourceServiceDetailRead : performs the service lookup
 func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(Config)
 	serviceName := d.Get("name").(string)
@@ -102,14 +102,14 @@ func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error
 	log.Println("[DEBUG] Reading Service Catalog...")
 	response, err := GetServiceCatalog(config)
 	if err != nil {
-		log.Printf("[ERROR] Error while getting response %s", err)
-		return fmt.Errorf("Error while getting response ->\n %s", err)
+		log.Printf("[ERROR] Error while getting response: %s", err)
+		return fmt.Errorf("Error while getting response: %s", err)
 	}
 
-	//store service catalog
+	// store service catalog
 	if json.Unmarshal(response, &serviceCatalogStruct); err != nil {
-		log.Printf("[Error] Error while unmarshal request json %s ", err)
-		return fmt.Errorf("Error while unmarshal request json -> %s ", err)
+		log.Printf("[Error] Error while unmarshalling json: %s ", err)
+		return fmt.Errorf("Error while unmarshalling json: %s ", err)
 	}
 
 	if serviceCatalogStruct.Subcount == 0 {
@@ -140,13 +140,13 @@ func dataSourceServiceDetailRead(d *schema.ResourceData, meta interface{}) error
 	// Get list of service_templates
 	templates, err := GetTemplateList(config, serviceID)
 	if json.Unmarshal(templates, &tempalteListStruct); err != nil {
-		log.Printf("[Error] Error while unmarshal request json %s ", err)
-		return fmt.Errorf("Error while unmarshal request json -> \n %s ", err)
+		log.Printf("[Error] Error while unmarshalling json: %s ", err)
+		return fmt.Errorf("Error while unmarshalling  json: %s ", err)
 	}
 	// calling helper function to settle aggregate type of schema
 	d.Set("service_templates", FlattenServiceTemplate(tempalteListStruct.ServiceTemplates))
 
-	//	Calling SetId on our schema.ResourceData using a value suitable for your resource.
+	//	Calling SetId on our schema.ResourceData using a value suitable for resource.
 	//	This ensures whatever resource state we set on schema.ResourceData will be persisted in local state.
 	// 	If we neglect to SetId, no resource state will be persisted.
 	d.SetId(fmt.Sprintf("%s", serviceID))
