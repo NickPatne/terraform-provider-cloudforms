@@ -74,7 +74,7 @@ func checkrequestStatus(d *schema.ResourceData, config Config, requestID string,
 		case <-time.After(1 * time.Second):
 			status, state, err := checkServiceRequestStatus(config, requestID)
 			if err == nil {
-				if state == "pending" && status == "Ok" {
+				if state == "finished" && status == "Ok" {
 					log.Println("[DEBUG] Service order added SUCCESSFULLY")
 					d.SetId(requestID)
 					return nil
