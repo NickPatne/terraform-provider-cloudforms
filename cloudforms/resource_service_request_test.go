@@ -82,7 +82,7 @@ func testAccCheckServiceExists(n string) resource.TestCheckFunc {
 			log.Println(err)
 		}
 		if record.Status != "Ok" {
-			return fmt.Errorf("[ERROR] Service is not executed")
+			return fmt.Errorf("Service is not executed")
 		}
 		return nil
 	}

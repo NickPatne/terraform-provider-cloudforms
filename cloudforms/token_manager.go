@@ -61,7 +61,7 @@ func getTokenFromServer(IP, UserID, Password string) (string, error) {
 		var tokenStruct tokenJsonstruct
 		if err = json.Unmarshal(body, &tokenStruct); err != nil {
 			log.Printf("[ERROR] Error while unmarshal %s", err)
-			return "", fmt.Errorf("[ERROR] Error while unmarshal %s", err)
+			return "", fmt.Errorf("Error while unmarshal %s", err)
 		}
 		token := tokenStruct.AuthToken
 		return token, nil

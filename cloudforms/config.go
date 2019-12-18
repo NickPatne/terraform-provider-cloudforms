@@ -23,19 +23,19 @@ func CFConnect(d *schema.ResourceData) (interface{}, error) {
 	ip := d.Get("ip").(string)
 	// Check If field is not empty
 	if ip == "" {
-		return nil, fmt.Errorf("[ERROR] cloudforms server IP not found ")
+		return nil, fmt.Errorf("Cloudforms server IP not found ")
 	}
 
 	username := d.Get("user_name").(string)
 	// Check If field is not empty
 	if username == "" {
-		return nil, fmt.Errorf("[ERROR] cloudforms server username not found")
+		return nil, fmt.Errorf("Cloudforms server username not found")
 	}
 
 	password := d.Get("password").(string)
 	// Check If field is not empty
 	if password == "" {
-		return nil, fmt.Errorf("[ERROR] cloudforms server Password not found")
+		return nil, fmt.Errorf("Cloudforms server Password not found")
 	}
 
 	config := Config{

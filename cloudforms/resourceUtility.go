@@ -80,7 +80,7 @@ func checkrequestStatus(d *schema.ResourceData, config Config, requestID string,
 					return nil
 				} else if status == "Error" {
 					log.Println("[ERROR] Failed")
-					return fmt.Errorf("[Error] Failed execution")
+					return fmt.Errorf("Failed execution \n request_state is [%s]", status)
 				} else {
 					log.Println("[DEBUG] Request state is :", state)
 				}
@@ -89,7 +89,7 @@ func checkrequestStatus(d *schema.ResourceData, config Config, requestID string,
 			}
 		case <-timeout:
 			log.Println("[DEBUG] Timeout occured")
-			return fmt.Errorf("[ERROR] Timeout")
+			return fmt.Errorf("Timeout")
 		}
 	}
 }
@@ -101,12 +101,12 @@ func checkServiceRequestStatus(config Config, requestID string) (string, string,
 	request, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
-		return "", "", fmt.Errorf("[ERROR] Error in creating http Request %s", err)
+		return "", "", fmt.Errorf("Error in creating http Request %s", err)
 	}
 	response, err := config.GetResponse(request)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
-		return "", "", fmt.Errorf("[ERROR] Error in getting response %s", err)
+		return "", "", fmt.Errorf("Error in getting response %s", err)
 	}
 
 	data := string(response)

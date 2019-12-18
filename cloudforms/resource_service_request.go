@@ -64,21 +64,21 @@ func resourceServiceRequestCreate(d *schema.ResourceData, meta interface{}) erro
 	file, file1, err := ReadJSON(inputFileName, href)
 	if err != nil {
 		log.Printf("[ERROR] %s", err)
-		return fmt.Errorf("[ERROR] %s", err)
+		return fmt.Errorf("%s", err)
 	}
 
 	// will set action to struct
 	err = json.Unmarshal(file, &templateStruct)
 	if err != nil {
 		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
-		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
+		return fmt.Errorf("Error while unmarshal file's json %s", err)
 	}
 
 	// will set resource attributes to struct
 	err = json.Unmarshal(file1, &templateStruct)
 	if err != nil {
 		log.Printf("[ERROR] Error while unmarshal file's json %s", err)
-		return fmt.Errorf("[ERROR] Error while unmarshal file's json %s", err)
+		return fmt.Errorf("Error while unmarshal file's json %s", err)
 	}
 
 	// buff will contain request body
@@ -88,20 +88,20 @@ func resourceServiceRequestCreate(d *schema.ResourceData, meta interface{}) erro
 	request, err := http.NewRequest("POST", url, bytes.NewBuffer(buff))
 	if err != nil {
 		log.Printf("[ERROR] Error in creating http Request %s", err)
-		return fmt.Errorf("[ERROR] Error in creating http Request %s", err)
+		return fmt.Errorf("Error in creating http Request %s", err)
 	}
 
 	response, err := config.GetResponse(request)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
-		return fmt.Errorf("[ERROR] Error in getting response %s", err)
+		return fmt.Errorf("Error in getting response %s", err)
 	}
 
 	// requestStruct : struct to store response body of post request
 	var requestStruct requestJsonstruct
 	if err = json.Unmarshal(response, &requestStruct); err != nil {
 		log.Printf("[ERROR] Error while unmarshal requests json %s", err)
-		return fmt.Errorf("[ERROR] Error while unmarshal requests json %s", err)
+		return fmt.Errorf("Error while unmarshal requests json %s", err)
 	}
 
 	requestID := requestStruct.Results[0].ID
@@ -109,6 +109,7 @@ func resourceServiceRequestCreate(d *schema.ResourceData, meta interface{}) erro
 
 	// check for timeout
 	if timeout == 0 {
+		// if time value is not provided
 		return checkrequestStatus(d, config, requestID, 180)
 	} else {
 		return checkrequestStatus(d, config, requestID, timeout)
@@ -130,7 +131,7 @@ func resourceServiceRequestDelete(d *schema.ResourceData, meta interface{}) erro
 	resourceServiceRequestRead(d, meta)
 	if d.Id() == "" {
 		log.Println("[ERROR] Cannot find Order")
-		return fmt.Errorf("[ERROR] Cannot find Order")
+		return fmt.Errorf("Cannot find Order")
 	}
 	config := meta.(Config)
 
@@ -143,7 +144,7 @@ func resourceServiceRequestDelete(d *schema.ResourceData, meta interface{}) erro
 	response, err := config.GetResponse(req)
 	if err != nil {
 		log.Printf("[ERROR] Error in getting response %s", err)
-		return fmt.Errorf("[ERROR] Error in getting response %s", err)
+		return fmt.Errorf("Error in getting response %s", err)
 	}
 
 	data := string(response)
